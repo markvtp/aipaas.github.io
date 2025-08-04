@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -40,6 +41,15 @@
                     height: calc(100vh - 4.5rem);
                 }
             }
+            .frame-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .iframe-wrapper {
+                min-width: 300px; /* 确保移动设备上的最小宽度 */
+                max-width: 800px; /* 限制最大宽度，避免过宽 */
+                margin: 0 auto; /* 居中显示 */
+            }
         }
     </style>
 </head>
@@ -63,7 +73,7 @@
     </header>
 
     <!-- 主要聊天区域 -->
-    <main class="relative w-full chat-fullscreen bg-white overflow-hidden">
+    <main class="relative w-full chat-fullscreen bg-gray-100 overflow-hidden z-0">
         <!-- 加载指示器 -->
         <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-20">
             <div class="flex flex-col items-center">
@@ -72,14 +82,18 @@
             </div>
         </div>
         
-        <!-- 聊天页面iframe -->
-        <iframe 
-            id="chatFrame" 
-            src="https://14.116.240.82:1453/chat/Kr17mLEiTY6oyCHM2sYHgw" 
-            class="w-full h-full border-0"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            onload="hideLoader()"
-        ></iframe>
+        <!-- 聊天页面容器 - 添加了滚动容器以处理缩放后的内容 -->
+        <div class="frame-container w-full h-full p-1">
+            <div class="iframe-wrapper relative w-full h-full">
+                <iframe 
+                    id="chatFrame" 
+                    src="https://14.116.240.82:1453/chat/Kr17mLEiTY6oyCHM2sYHgw" 
+                    class="w-full h-full border-0 transform transition-transform duration-200 ease-in-out"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    onload="hideLoader()"
+                ></iframe>
+            </div>
+        </div>
     </main>
 
     <!-- 底部操作栏 -->
@@ -103,8 +117,9 @@
         // 全局变量
         let currentZoom = 1.0;
         const zoomStep = 0.1;
-        const minZoom = 0.5;
-        const maxZoom = 1.5;
+        const minZoom = 0.7; // 提高最小缩放比例，避免过度缩小
+        const maxZoom = 1.3; // 适当降低最大缩放比例
+        const baseWidth = 800; // 基准宽度，用于计算容器宽度
         
         // DOM元素
         const chatFrame = document.getElementById('chatFrame');
@@ -114,6 +129,8 @@
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
         const fitBtn = document.getElementById('fitBtn');
+        const frameContainer = document.querySelector('.frame-container');
+        const iframeWrapper = document.querySelector('.iframe-wrapper');
         
         // 隐藏加载指示器
         function hideLoader() {
@@ -166,14 +183,22 @@
             applyZoom();
         });
         
-        // 应用缩放
+        // 应用缩放 - 优化版本
         function applyZoom() {
-            chatFrame.style.transform = `scale(${currentZoom})`;
-            chatFrame.style.transformOrigin = 'center top';
+            // 计算基于当前缩放的容器宽度
+            const containerWidth = baseWidth * currentZoom;
+            iframeWrapper.style.width = `${containerWidth}px`;
             
-            // 调整iframe高度以避免滚动问题
-            const mainContainer = document.querySelector('main');
-            chatFrame.style.height = `${100 / currentZoom}%`;
+            // 重置transform，使用宽度缩放代替transform缩放
+            chatFrame.style.transform = 'none';
+            chatFrame.style.width = '100%';
+            chatFrame.style.height = '100%';
+            
+            // 滚动到内容中心（如果需要）
+            setTimeout(() => {
+                const scrollPos = (iframeWrapper.offsetWidth - frameContainer.offsetWidth) / 2;
+                frameContainer.scrollLeft = scrollPos;
+            }, 100);
         }
         
         // 监听窗口大小变化，重新调整
@@ -198,11 +223,19 @@
                     }
                     viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
                     
-                    // 尝试调整聊天区域大小
-                    const chatContainers = iframeDoc.querySelectorAll('.chat-container, .message-container');
+                    // 尝试调整聊天区域大小和样式
+                    const chatContainers = iframeDoc.querySelectorAll('.chat-container, .message-container, .conversation-container');
                     chatContainers.forEach(container => {
                         container.style.maxWidth = '100%';
                         container.style.width = '100%';
+                        container.style.minWidth = '300px'; // 设置最小宽度
+                    });
+                    
+                    // 调整消息气泡样式，确保比例
+                    const messageBubbles = iframeDoc.querySelectorAll('.message-bubble, .chat-message');
+                    messageBubbles.forEach(bubble => {
+                        bubble.style.maxWidth = '85%'; // 消息气泡最大宽度限制
+                        bubble.style.minWidth = 'auto';
                     });
                     
                     // 移除可能导致滚动的元素的固定高度
@@ -220,6 +253,8 @@
         
         // 页面加载完成后尝试调整
         window.addEventListener('load', () => {
+            // 初始化缩放
+            applyZoom();
             // 延迟执行，确保iframe内容已加载
             setTimeout(adjustIframeContent, 2000);
         });
