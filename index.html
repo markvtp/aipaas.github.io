@@ -2,190 +2,226 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信息科AI助手</title>
-    <style>
-        :root {
-            --primary-color: #4f46e5;
-            --bg-color: #f9fafb;
-            --text-color: #111827;
-            --bot-bubble: #ffffff;
-            --user-bubble: #e0e7ff;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>优化的聊天页面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background-color: white;
-            padding: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .header h1 {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-        }
-        
-        .chat-container {
-            flex: 1;
-            display: flex;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            overflow: hidden;
-        }
-        
-        .sidebar {
-            width: 250px;
-            background-color: white;
-            border-right: 1px solid #e5e7eb;
-            overflow-y: auto;
-            display: none;
-        }
-        
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .messages {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-        
-        .message {
-            margin-bottom: 1rem;
-            display: flex;
-        }
-        
-        .message.bot {
-            justify-content: flex-start;
-        }
-        
-        .message.user {
-            justify-content: flex-end;
-        }
-        
-        .bubble {
-            max-width: 80%;
-            padding: 0.75rem 1rem;
-            border-radius: 1rem;
-            line-height: 1.5;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-        
-        .bot .bubble {
-            background-color: var(--bot-bubble);
-            border-bottom-left-radius: 0.25rem;
-        }
-        
-        .user .bubble {
-            background-color: var(--user-bubble);
-            border-bottom-right-radius: 0.25rem;
-        }
-        
-        .input-area {
-            padding: 1rem;
-            background-color: white;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .input-field {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            outline: none;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        
-        .input-field:focus {
-            border-color: var(--primary-color);
-        }
-        
-        .send-btn, .voice-btn {
-            padding: 0.75rem;
-            border: none;
-            border-radius: 0.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .send-btn:hover, .voice-btn:hover {
-            opacity: 0.9;
-        }
-        
-        .iframe-container {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            min-height: 700px;
-            border: none;
-        }
-        
-        @media (min-width: 768px) {
-            .sidebar {
-                display: block;
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .chat-fullscreen {
+                height: calc(100vh - 4rem);
+            }
+            @media (max-width: 360px) {
+                .chat-fullscreen {
+                    height: calc(100vh - 3.5rem);
+                }
+            }
+            @media (min-width: 768px) {
+                .chat-fullscreen {
+                    height: calc(100vh - 4.5rem);
+                }
             }
         }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>信息科AI助手</h1>
-    </div>
-    
-    <div class="chat-container">
-        <div class="sidebar">
-            <!-- 历史对话列表 -->
-            <div class="history-list">
-                <!-- 动态生成的历史对话项 -->
+<body class="bg-gray-50 overflow-hidden text-gray-800">
+    <!-- 顶部导航栏 -->
+    <header class="bg-primary text-white shadow-md z-10">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <h1 class="text-lg font-semibold flex items-center">
+                <i class="fa fa-comments-o mr-2"></i>
+                <span>聊天界面</span>
+            </h1>
+            <div class="flex items-center space-x-3">
+                <button id="refreshBtn" class="p-2 hover:bg-primary-700 rounded-full transition-colors">
+                    <i class="fa fa-refresh"></i>
+                </button>
+                <button id="fullscreenBtn" class="p-2 hover:bg-primary-700 rounded-full transition-colors">
+                    <i class="fa fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要聊天区域 -->
+    <main class="relative w-full chat-fullscreen bg-white overflow-hidden">
+        <!-- 加载指示器 -->
+        <div id="loader" class="absolute inset-0 flex items-center justify-center bg-white z-20">
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-3 text-gray-600">加载中...</p>
             </div>
         </div>
         
-        <div class="chat-area">
-            <div class="iframe-container">
-                <iframe
-                    src="http://14.116.240.82:30080/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
-                    style="width: 100%; height: 100%; min-height: 700px"
-                    frameborder="0"
-                    allow="microphone">
-                </iframe>
+        <!-- 聊天页面iframe -->
+        <iframe 
+            id="chatFrame" 
+            src="https://14.116.240.82:1453/chat/Kr17mLEiTY6oyCHM2sYHgw" 
+            class="w-full h-full border-0"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            onload="hideLoader()"
+        ></iframe>
+    </main>
+
+    <!-- 底部操作栏 -->
+    <footer class="bg-white border-t border-gray-200 py-2 z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between text-sm text-gray-500">
+                <button id="zoomOutBtn" class="p-2 hover:bg-gray-100 rounded transition-colors">
+                    <i class="fa fa-search-minus"></i> 缩小
+                </button>
+                <button id="zoomInBtn" class="p-2 hover:bg-gray-100 rounded transition-colors">
+                    <i class="fa fa-search-plus"></i> 放大
+                </button>
+                <button id="fitBtn" class="p-2 hover:bg-gray-100 rounded transition-colors">
+                    <i class="fa fa-compress"></i> 适应屏幕
+                </button>
             </div>
         </div>
-    </div>
-    
+    </footer>
+
     <script>
-        // 这里可以添加交互逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            // 移动端侧边栏切换逻辑
-            // 输入框交互逻辑
-            // 历史记录管理等
+        // 全局变量
+        let currentZoom = 1.0;
+        const zoomStep = 0.1;
+        const minZoom = 0.5;
+        const maxZoom = 1.5;
+        
+        // DOM元素
+        const chatFrame = document.getElementById('chatFrame');
+        const loader = document.getElementById('loader');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const fitBtn = document.getElementById('fitBtn');
+        
+        // 隐藏加载指示器
+        function hideLoader() {
+            loader.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+            }, 500);
+        }
+        
+        // 刷新iframe
+        refreshBtn.addEventListener('click', () => {
+            loader.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            chatFrame.src = chatFrame.src;
+        });
+        
+        // 全屏切换
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`全屏切换错误: ${err.message}`);
+                });
+                fullscreenBtn.innerHTML = '<i class="fa fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    fullscreenBtn.innerHTML = '<i class="fa fa-expand"></i>';
+                }
+            }
+        });
+        
+        // 放大功能
+        zoomInBtn.addEventListener('click', () => {
+            if (currentZoom < maxZoom) {
+                currentZoom += zoomStep;
+                applyZoom();
+            }
+        });
+        
+        // 缩小功能
+        zoomOutBtn.addEventListener('click', () => {
+            if (currentZoom > minZoom) {
+                currentZoom -= zoomStep;
+                applyZoom();
+            }
+        });
+        
+        // 适应屏幕
+        fitBtn.addEventListener('click', () => {
+            currentZoom = 1.0;
+            applyZoom();
+        });
+        
+        // 应用缩放
+        function applyZoom() {
+            chatFrame.style.transform = `scale(${currentZoom})`;
+            chatFrame.style.transformOrigin = 'center top';
+            
+            // 调整iframe高度以避免滚动问题
+            const mainContainer = document.querySelector('main');
+            chatFrame.style.height = `${100 / currentZoom}%`;
+        }
+        
+        // 监听窗口大小变化，重新调整
+        window.addEventListener('resize', () => {
+            applyZoom();
+        });
+        
+        // 尝试自动调整原页面元素
+        function adjustIframeContent() {
+            try {
+                // 获取iframe中的文档
+                const iframeDoc = chatFrame.contentDocument || chatFrame.contentWindow.document;
+                
+                // 如果有权限访问iframe内容，则进行调整
+                if (iframeDoc) {
+                    // 添加视口元标签（如果不存在）
+                    let viewportMeta = iframeDoc.querySelector('meta[name="viewport"]');
+                    if (!viewportMeta) {
+                        viewportMeta = iframeDoc.createElement('meta');
+                        viewportMeta.name = 'viewport';
+                        iframeDoc.head.appendChild(viewportMeta);
+                    }
+                    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                    
+                    // 尝试调整聊天区域大小
+                    const chatContainers = iframeDoc.querySelectorAll('.chat-container, .message-container');
+                    chatContainers.forEach(container => {
+                        container.style.maxWidth = '100%';
+                        container.style.width = '100%';
+                    });
+                    
+                    // 移除可能导致滚动的元素的固定高度
+                    const fixedHeightElements = iframeDoc.querySelectorAll('[style*="height: 100%"], [style*="height: 600px"]');
+                    fixedHeightElements.forEach(el => {
+                        el.style.height = 'auto';
+                        el.style.minHeight = '100%';
+                    });
+                }
+            } catch (e) {
+                // 跨域访问可能会失败，这里静默处理
+                console.log('无法调整iframe内容，可能存在跨域限制');
+            }
+        }
+        
+        // 页面加载完成后尝试调整
+        window.addEventListener('load', () => {
+            // 延迟执行，确保iframe内容已加载
+            setTimeout(adjustIframeContent, 2000);
         });
     </script>
 </body>
