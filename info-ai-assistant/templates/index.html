@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息科AI助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- 头部导航 -->
+    <header class="header py-3">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="logo me-3">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-0 fw-bold">信息科AI助手</h1>
+                        <p class="mb-0 small">您的智能医疗信息咨询助手</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light d-lg-none" id="historyToggle">
+                    <i class="fas fa-history"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container my-4">
+        <div class="row g-4">
+            <!-- 历史对话面板 (大屏显示) -->
+            <div class="col-lg-4 d-none d-lg-block">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary">
+                            <i class="fas fa-history me-2"></i>历史对话
+                        </h3>
+                        <div class="list-group mt-3" id="historyList">
+                            <!-- 历史对话将通过JS动态加载 -->
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="card-title text-primary">
+                                <i class="fas fa-star me-2"></i>核心能力
+                            </h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent">医疗信息解答与解释</li>
+                                <li class="list-group-item bg-transparent">医学文献摘要与解读</li>
+                                <li class="list-group-item bg-transparent">医疗数据分析报告</li>
+                                <li class="list-group-item bg-transparent">医学术语翻译与解释</li>
+                                <li class="list-group-item bg-transparent">诊疗方案建议</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天主区域 -->
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column p-0">
+                        <!-- 聊天消息区域 -->
+                        <div class="chat-messages flex-grow-1 p-4" id="chatMessages">
+                            <div class="alert alert-info text-center">
+                                您好！我是信息科AI助手，请问有什么可以帮您的？
+                            </div>
+                        </div>
+                        
+                        <!-- 输入区域 -->
+                        <div class="input-area p-3 border-top bg-light">
+                            <div class="input-group">
+                                <textarea 
+                                    class="form-control" 
+                                    id="userInput" 
+                                    rows="1"
+                                    placeholder="请输入您的问题..." 
+                                    style="resize: none;"></textarea>
+                                <button class="btn btn-primary" id="sendButton">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="mt-2 d-flex justify-content-between">
+                                <small class="text-muted">
+                                    <i class="fas fa-shield-alt text-success me-1"></i>安全连接
+                                </small>
+                                <small class="text-muted" id="systemStatus">
+                                    状态: <span class="text-success">就绪</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 历史对话移动面板 (模态框) -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">历史对话与功能</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary">
+                            <i class="fas fa-history me-2"></i>历史对话
+                        </h6>
+                        <div class="list-group mt-2" id="mobileHistoryList">
+                            <!-- 历史对话将通过JS动态加载 -->
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h6 class="fw-bold text-primary">
+                            <i class="fas fa-star me-2"></i>核心能力
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent">医疗信息解答与解释</li>
+                            <li class="list-group-item bg-transparent">医学文献摘要与解读</li>
+                            <li class="list-group-item bg-transparent">医疗数据分析报告</li>
+                            <li class="list-group-item bg-transparent">医学术语翻译与解释</li>
+                            <li class="list-group-item bg-transparent">诊疗方案建议</li>
+                        </ul>
+                        
+                        <h6 class="fw-bold text-primary mt-3">
+                            <i class="fas fa-cogs me-2"></i>功能特点
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent">多语言理解与分析</li>
+                            <li class="list-group-item bg-transparent">上下文感知对话能力</li>
+                            <li class="list-group-item bg-transparent">医疗数据隐私保护</li>
+                            <li class="list-group-item bg-transparent">持续学习与知识更新</li>
+                            <li class="list-group-item bg-transparent">跨终端支持</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap和自定义JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
