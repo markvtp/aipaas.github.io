@@ -6,11 +6,219 @@
     <title>信息科AI助手</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #d1e4ff;
+            --primary-dark: #0d47a1;
+            --accent: #00c853;
+            --dark: #202124;
+            --light: #f5f7fd;
+            --gray: #5f6368;
+            --border: #dadce0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header.header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+        }
+
+        .logo {
+            background-color: var(--primary-light);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: var(--primary);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .chat-messages {
+            overflow-y: auto;
+            max-height: 60vh;
+            min-height: 300px;
+            padding: 20px;
+            background-color: white;
+        }
+
+        .message {
+            max-width: 85%;
+            margin-bottom: 1.5rem;
+            padding: 12px 16px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .user-message {
+            margin-left: auto;
+            background-color: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            margin-right: auto;
+            background-color: var(--light);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-header {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ai-message .message-header {
+            color: var(--gray);
+        }
+
+        .user-message .message-header {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .input-area {
+            background-color: white;
+        }
+
+        #userInput {
+            padding: 12px 16px;
+            border-radius: 25px;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        #userInput:focus {
+            box-shadow: 0 0 0 0.25rem rgba(26, 115, 232, 0.25);
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        #sendButton {
+            padding: 10px 16px;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            margin-left: 10px;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            position: relative;
+            height: 14px;
+            padding-left: 18px;
+        }
+
+        .typing-indicator span {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            bottom: 0;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            left: 0px;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            left: 10px;
+            animation: bounce 1.2s infinite ease-in-out 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            left: 20px;
+            animation: bounce 1.2s infinite ease-in-out 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @media (max-width: 992px) {
+            .card {
+                height: auto !important;
+            }
+            
+            .chat-messages {
+                max-height: 70vh;
+            }
+            
+            .col-lg-4.d-none.d-lg-block {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .logo {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            #userInput {
+                padding: 10px 14px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- 头部导航 -->
-    <header class="header py-3">
+    <header class="header">
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
@@ -31,39 +239,12 @@
 
     <div class="container my-4">
         <div class="row g-4">
-            <!-- 历史对话面板 (大屏显示) -->
-            <div class="col-lg-4 d-none d-lg-block">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h3 class="card-title text-primary">
-                            <i class="fas fa-history me-2"></i>历史对话
-                        </h3>
-                        <div class="list-group mt-3" id="historyList">
-                            <!-- 历史对话将通过JS动态加载 -->
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h3 class="card-title text-primary">
-                                <i class="fas fa-star me-2"></i>核心能力
-                            </h3>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item bg-transparent">医疗信息解答与解释</li>
-                                <li class="list-group-item bg-transparent">医学文献摘要与解读</li>
-                                <li class="list-group-item bg-transparent">医疗数据分析报告</li>
-                                <li class="list-group-item bg-transparent">医学术语翻译与解释</li>
-                                <li class="list-group-item bg-transparent">诊疗方案建议</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- 聊天主区域 -->
-            <div class="col-lg-8">
+            <div class="col-12">
                 <div class="card h-100">
                     <div class="card-body d-flex flex-column p-0">
                         <!-- 聊天消息区域 -->
-                        <div class="chat-messages flex-grow-1 p-4" id="chatMessages">
+                        <div class="chat-messages flex-grow-1" id="chatMessages">
                             <div class="alert alert-info text-center">
                                 您好！我是信息科AI助手，请问有什么可以帮您的？
                             </div>
@@ -71,14 +252,14 @@
                         
                         <!-- 输入区域 -->
                         <div class="input-area p-3 border-top bg-light">
-                            <div class="input-group">
+                            <div class="d-flex align-items-center">
                                 <textarea 
                                     class="form-control" 
                                     id="userInput" 
                                     rows="1"
                                     placeholder="请输入您的问题..." 
                                     style="resize: none;"></textarea>
-                                <button class="btn btn-primary" id="sendButton">
+                                <button class="btn btn-primary ms-2" id="sendButton">
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
@@ -97,55 +278,214 @@
             </div>
         </div>
     </div>
-    
-    <!-- 历史对话移动面板 (模态框) -->
-    <div class="modal fade" id="historyModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">历史对话与功能</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-4">
-                        <h6 class="fw-bold text-primary">
-                            <i class="fas fa-history me-2"></i>历史对话
-                        </h6>
-                        <div class="list-group mt-2" id="mobileHistoryList">
-                            <!-- 历史对话将通过JS动态加载 -->
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h6 class="fw-bold text-primary">
-                            <i class="fas fa-star me-2"></i>核心能力
-                        </h6>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item bg-transparent">医疗信息解答与解释</li>
-                            <li class="list-group-item bg-transparent">医学文献摘要与解读</li>
-                            <li class="list-group-item bg-transparent">医疗数据分析报告</li>
-                            <li class="list-group-item bg-transparent">医学术语翻译与解释</li>
-                            <li class="list-group-item bg-transparent">诊疗方案建议</li>
-                        </ul>
-                        
-                        <h6 class="fw-bold text-primary mt-3">
-                            <i class="fas fa-cogs me-2"></i>功能特点
-                        </h6>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item bg-transparent">多语言理解与分析</li>
-                            <li class="list-group-item bg-transparent">上下文感知对话能力</li>
-                            <li class="list-group-item bg-transparent">医疗数据隐私保护</li>
-                            <li class="list-group-item bg-transparent">持续学习与知识更新</li>
-                            <li class="list-group-item bg-transparent">跨终端支持</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 引入Bootstrap和自定义JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM元素
+            const chatMessages = document.getElementById('chatMessages');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const systemStatus = document.getElementById('systemStatus');
+            
+            // 对话历史
+            let conversationHistory = [];
+            
+            // 调整输入框高度
+            function adjustTextareaHeight() {
+                userInput.style.height = 'auto';
+                userInput.style.height = (userInput.scrollHeight) + 'px';
+            }
+            
+            userInput.addEventListener('input', adjustTextareaHeight);
+            
+            // 初始化
+            adjustTextareaHeight();
+            
+            // 发送消息
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // 添加用户消息到聊天区
+                addMessage('user', message);
+                
+                // 添加到历史记录
+                conversationHistory.push({
+                    role: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // 清空输入框并禁用按钮
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                sendButton.disabled = true;
+                systemStatus.innerHTML = '状态: <span class="text-primary">思考中...</span>';
+                
+                // 添加AI正在输入指示
+                addTypingIndicator();
+                
+                // 发送请求到后端
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('API请求失败');
+                    }
+                    return response;
+                })
+                .then(response => {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let aiResponse = '';
+                    
+                    function read() {
+                        return reader.read().then(({ value, done }) => {
+                            if (done) {
+                                finishResponse(aiResponse);
+                                return;
+                            }
+                            
+                            const text = decoder.decode(value);
+                            const lines = text.split('\n');
+                            
+                            for (const line of lines) {
+                                if (line.startsWith('data:')) {
+                                    try {
+                                        const data = JSON.parse(line.substring(5).trim());
+                                        if (data.message) {
+                                            aiResponse += data.message;
+                                            updateLastMessage('assistant', aiResponse);
+                                        }
+                                        if (data.error) {
+                                            updateLastMessage('assistant', `<div class="text-danger">${data.error}</div>`);
+                                            systemStatus.innerHTML = '状态: <span class="text-danger">错误</span>';
+                                        }
+                                    } catch (e) {
+                                        console.error('解析事件流出错:', e);
+                                    }
+                                }
+                            }
+                            
+                            return read();
+                        });
+                    }
+                    
+                    return read();
+                })
+                .catch(error => {
+                    console.error('请求出错:', error);
+                    updateLastMessage('assistant', '<div class="text-danger">与AI助手的连接中断</div>');
+                    systemStatus.innerHTML = '状态: <span class="text-danger">错误</span>';
+                });
+            }
+            
+            // 添加打字指示器
+            function addTypingIndicator() {
+                const typingHtml = `
+                    <div class="message ai-message" id="typingIndicator">
+                        <div class="message-header">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>AI助手</div>
+                        </div>
+                        <div class="message-content">
+                            <div class="typing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatMessages.innerHTML += typingHtml;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 更新最后一条消息（用于流式响应）
+            function updateLastMessage(role, content) {
+                const lastMessage = document.getElementById('typingIndicator') || 
+                                    document.querySelector('.message:last-child');
+                
+                if (lastMessage) {
+                    lastMessage.querySelector('.message-content').innerHTML = content;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+            
+            // 完成响应处理
+            function finishResponse(content) {
+                // 移除打字指示器
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) typingIndicator.remove();
+                
+                // 创建完成的AI消息
+                const aiMessageHtml = createMessage('assistant', content);
+                
+                // 添加到聊天区
+                chatMessages.innerHTML += aiMessageHtml;
+                
+                // 添加到历史记录
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: content,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // 更新状态
+                systemStatus.innerHTML = '状态: <span class="text-success">就绪</span>';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 创建消息元素
+            function addMessage(role, content) {
+                const messageHtml = createMessage(role, content);
+                chatMessages.innerHTML += messageHtml;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 创建消息HTML
+            function createMessage(role, content) {
+                const isAI = role === 'assistant';
+                const icon = isAI ? 'fa-robot' : 'fa-user';
+                const name = isAI ? 'AI助手' : '您';
+                const messageClass = isAI ? 'ai-message' : 'user-message';
+                
+                return `
+                    <div class="message ${messageClass}">
+                        <div class="message-header">
+                            <div class="message-avatar">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <div>${name}</div>
+                        </div>
+                        <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            }
+            
+            // 事件监听
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            userInput.addEventListener('input', function() {
+                sendButton.disabled = this.value.trim() === '';
+            });
+        });
+    </script>
 </body>
 </html>
