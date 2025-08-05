@@ -4,35 +4,34 @@ import uuid
 import requests
 import mimetypes
 import base64
-import time
 import logging
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
+# 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-class Config:
-
-    # 模型名称常量 (与前端 model-selector 的 value 对应)
-    GEMINI_PRO = 'gemini-2.5-flash'
-
-    # API Endpoints
-    GEMINI_API_ENDPOINT = 'https://gemini'
-
 app = Flask(__name__)
+CORS(app)  # 解决跨域问题
 
-# --- 3. 目录设置 ---
+# --- 配置 ---
+class Config:
+    # API 配置 - 使用提供的API信息
+    API_URL = "http://14.116.240.82:30080/api/v1/conversation"
+    API_KEY = "sk-e2706a82412705c0e90a26ba311da546"
+    APP_ID = "2abd7b98-b122-4d8e-a8c8-21ccdac60783"
+
+# --- 目录设置 ---
 CONVERSATIONS_DIR = 'conversations'
-TEMP_UPLOADS_DIR = 'temp_uploads' # 用于临时存放上传的图片
+TEMP_UPLOADS_DIR = 'temp_uploads'  # 用于临时存放上传的图片
 if not os.path.exists(CONVERSATIONS_DIR):
     os.makedirs(CONVERSATIONS_DIR)
 if not os.path.exists(TEMP_UPLOADS_DIR):
     os.makedirs(TEMP_UPLOADS_DIR)
 
 
-# --- 4. 辅助函数 ---
-
+# --- 辅助函数 ---
 def get_conversation_title(history):
     """从第一条用户消息生成标题"""
     for message in history:
@@ -56,49 +55,58 @@ def get_mime_type(image_path):
     return mime_type or 'application/octet-stream'
 
 
-# --- 5. 模型调用逻辑 (重构后) ---
-
-def _call_gemini_api(model, prompt, image_paths):
-    """调用 Gemini API，支持多图片"""
-    logging.info(f"Calling Gemini API with model: {model}")
-    data = {'prompt': prompt, 'model': model}
-    files_to_upload = []
-    opened_files = []
-
+# --- 模型调用逻辑 ---
+def call_api_stream(prompt):
+    """调用指定的API，返回流式响应"""
+    logging.info(f"Calling API with prompt: {prompt[:50]}...")
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {Config.API_KEY}"
+    }
+    
+    data = {
+        "app_id": Config.APP_ID,
+        "stream": True,
+        "query": prompt
+    }
+    
     try:
-        for path in image_paths:
-            file_object = open(path, 'rb')
-            opened_files.append(file_object)
-            files_to_upload.append(('images', (os.path.basename(path), file_object, get_mime_type(path))))
+        with requests.post(Config.API_URL, headers=headers, json=data, stream=True) as response:
+            if response.status_code != 200:
+                yield f"data: {json.dumps({'error': f'API请求失败，状态码: {response.status_code}'})}\n\n"
+                return
+
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        line_str = line.decode("utf-8")
+                        if line_str.startswith("data:"):
+                            json_data = json.loads(line_str[6:])
+                            answer_chunk = json_data.get("answer", "")
+                            if answer_chunk:
+                                yield f"data: {json.dumps({'answer': answer_chunk})}\n\n"
+                    except json.JSONDecodeError:
+                        yield f"data: {json.dumps({'error': f'无法解析的JSON数据: {line_str}'})}\n\n"
+                    except Exception as e:
+                        yield f"data: {json.dumps({'error': f'处理数据时出错: {str(e)}'})}\n\n"
         
-        response = requests.post(Config.GEMINI_API_ENDPOINT, files=files_to_upload, data=data)
-        response.raise_for_status()
-        return response.text
-    finally:
-        # 确保所有打开的文件都被关闭
-        for f in opened_files:
-            f.close()
+        # 结束标记
+        yield "data: [DONE]\n\n"
+        
+    except Exception as e:
+        yield f"data: {json.dumps({'error': f'请求处理失败: {str(e)}'})}\n\n"
 
 
-def get_model_response(model, prompt, image_paths):
-    """根据模型名称调度到对应的API调用函数"""
-    if "gemini" in model:
-        return _call_gemini_api(model, prompt, image_paths)
-    else:
-        raise ValueError(f"Unsupported model specified: {model}")
-
-
-# --- 6. Flask 路由 (API Endpoints) ---
-
+# --- Flask 路由 ---
 @app.route('/')
 def index():
     """渲染主聊天界面"""
     return render_template('index.html')
 
-# get_conversations, get_conversation_history, search_all_conversations 路由保持不变...
 @app.route('/api/conversations', methods=['GET'])
 def get_conversations():
-    """Lists all saved conversations, sorted by last modification time."""
+    """列出所有保存的对话，按最后修改时间排序"""
     conversations = []
     if not os.path.exists(CONVERSATIONS_DIR):
         return jsonify([])
@@ -119,28 +127,28 @@ def get_conversations():
                     title = get_conversation_title(history) 
                     conversations.append({'id': conv_id, 'title': title})
             except (json.JSONDecodeError, IOError, IndexError) as e:
-                logging.warning(f"Could not read/parse {filepath}: {e}")
+                logging.warning(f"无法读取/解析 {filepath}: {e}")
     except Exception as e:
-        logging.error(f"Error listing conversations: {e}")
-        return jsonify({"error": "Failed to retrieve conversations"}), 500
+        logging.error(f"列出对话时出错: {e}")
+        return jsonify({"error": "获取对话列表失败"}), 500
     return jsonify(conversations)
 
 @app.route('/api/conversation/<conversation_id>', methods=['GET'])
 def get_conversation_history(conversation_id):
-    """Retrieves the full history for a single conversation."""
+    """获取单个对话的完整历史"""
     filepath = os.path.join(CONVERSATIONS_DIR, f"{conversation_id}.json")
     if not os.path.exists(filepath):
-        return jsonify({'error': 'Conversation not found'}), 404
+        return jsonify({'error': '未找到对话'}), 404
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             history = json.load(f)
             return jsonify(history)
     except Exception as e:
-        return jsonify({'error': f"Could not load conversation: {e}"}), 500
+        return jsonify({'error': f"加载对话失败: {e}"}), 500
 
 @app.route('/api/search/all', methods=['GET'])
 def search_all_conversations():
-    """Searches for a query across all conversation files."""
+    """在所有对话文件中搜索查询内容"""
     query = request.args.get('q', '').lower()
     if not query:
         return jsonify([])
@@ -170,19 +178,18 @@ def search_all_conversations():
                     'matches': matches
                 })
         except Exception as e:
-            logging.warning(f"Error processing file {filename} for search: {e}")
+            logging.warning(f"搜索处理文件 {filename} 时出错: {e}")
     return jsonify(all_results)
 
-# --- 主聊天路由---
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    # --- a. 解析请求 ---
+    """处理聊天请求，支持流式响应"""
+    # 解析请求参数
     conversation_id = request.form.get('conversation_id')
     prompt = request.form.get('prompt', '')
-    model = request.form.get('model', Config.GEMINI_PRO) # 默认模型
-    image_files = request.files.getlist('images') # 获取所有名为'images'的文件
+    image_files = request.files.getlist('images')  # 获取所有上传的图片
 
-    # --- b. 管理会话ID和历史记录 ---
+    # 管理会话ID和历史记录
     is_new_conversation = False
     if not conversation_id or conversation_id == 'null':
         conversation_id = str(uuid.uuid4())
@@ -196,7 +203,7 @@ def chat():
         except (FileNotFoundError, json.JSONDecodeError):
             conversation_history = []
             
-    # --- c. 处理并保存上传的图片 ---
+    # 处理上传的图片
     saved_image_paths = []
     user_content_parts = [prompt]
     try:
@@ -206,48 +213,63 @@ def chat():
                 filepath = os.path.join(TEMP_UPLOADS_DIR, f"{uuid.uuid4()}_{filename}")
                 image_file.save(filepath)
                 saved_image_paths.append(filepath)
-                user_content_parts.append(f"[Image: {filename}]")
+                user_content_parts.append(f"[图片: {filename}]")
 
-        # --- d. 构建用户消息并更新历史 ---
+        # 构建用户消息并更新历史
         user_message_content = "\n".join(user_content_parts)
         user_message = {"role": "user", "content": user_message_content}
         conversation_history.append(user_message)
         
-        formatted_prompt_for_gemini = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-        logging.info(f"formatted_prompt: {formatted_prompt_for_gemini}")
-        # --- e. 调用模型并获取响应 ---
-        model_response = get_model_response(model, formatted_prompt_for_gemini, saved_image_paths)
-        
-        # --- f. 保存AI响应并更新文件 ---
-        ai_message = {"role": "assistant", "content": model_response}
-        conversation_history.append(ai_message)
-        
+        # 保存用户消息
         conv_filepath = os.path.join(CONVERSATIONS_DIR, f"{conversation_id}.json")
         with open(conv_filepath, 'w', encoding='utf-8') as f:
             json.dump(conversation_history, f, indent=2, ensure_ascii=False)
+        
+        # 构建发送给API的提示
+        # 由于API可能只需要最后一个问题，我们这里使用用户的最新输入
+        # 如果需要上下文，可以改用完整历史
+        formatted_prompt = prompt
             
-        # --- g. 构造并返回前端数据 ---
-        return_data = {'response': model_response, 'conversation_id': conversation_id}
-        if is_new_conversation:
-            return_data['new_conversation_created'] = True
-        return jsonify(return_data)
+        # 定义流式响应生成器
+        def generate():
+            full_response = ""
+            # 从API获取流式响应
+            for chunk in call_api_stream(formatted_prompt):
+                yield chunk
+                # 解析响应内容以累积完整回答
+                if chunk.startswith("data:") and "[DONE]" not in chunk:
+                    try:
+                        data = json.loads(chunk[5:].strip())
+                        if "answer" in data:
+                            full_response += data["answer"]
+                    except:
+                        pass
+            
+            # 保存AI的完整响应到历史记录
+            if full_response:
+                ai_message = {"role": "assistant", "content": full_response}
+                conversation_history.append(ai_message)
+                with open(conv_filepath, 'w', encoding='utf-8') as f:
+                    json.dump(conversation_history, f, indent=2, ensure_ascii=False)
+        
+        # 返回流式响应
+        return Response(generate(), mimetype='text/event-stream')
 
     except Exception as e:
-        logging.error(f"Error in chat endpoint: {e}", exc_info=True)
-        # 如果出错，从历史记录中移除最后添加的用户消息，防止保存不完整的对话
+        logging.error(f"聊天接口出错: {e}", exc_info=True)
+        # 如果出错，从历史记录中移除最后添加的用户消息
         if conversation_history and conversation_history[-1]['role'] == 'user':
             conversation_history.pop()
-        return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
+        return jsonify({'error': f"发生意外错误: {str(e)}"}), 500
 
     finally:
-        # --- h. 清理临时图片文件 ---
+        # 清理临时图片文件
         for path in saved_image_paths:
             try:
                 os.remove(path)
-                logging.info(f"Cleaned up temporary file: {path}")
+                logging.info(f"已清理临时文件: {path}")
             except OSError as e:
-                logging.error(f"Error cleaning up file {path}: {e}")
+                logging.error(f"清理文件 {path} 时出错: {e}")
 
 if __name__ == '__main__':
-    # 建议不要在生产环境中使用 debug=True
     app.run(host='0.0.0.0', port=8810, debug=False)
