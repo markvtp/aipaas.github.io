@@ -1,21 +1,26 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Chat Interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#34D399">
+    <title>智能聊天助手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
     <script>
-        // 配置Tailwind自定义设置，改为绿色主题
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#22c55e', // 主绿色
-                        secondary: '#4ade80', // 次要绿色
+                        primary: '#34D399',
+                        secondary: '#10B981',
+                        neutral: '#F3F4F6',
                     },
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                     },
                 }
             }
@@ -27,68 +32,80 @@
             .content-auto {
                 content-visibility: auto;
             }
-            .iframe-container {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                overflow: hidden;
+            .safe-top {
+                padding-top: env(safe-area-inset-top);
             }
-            .status-bar {
-                height: env(safe-area-inset-top);
-                background-color: #ffffff;
+            .safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
             }
         }
     </style>
 </head>
-<body class="bg-gray-50 overflow-hidden">
-    <!-- 适配移动设备顶部安全区域 -->
-    <div class="status-bar"></div>
-    
-    <!-- 顶部导航栏 - 绿色主题 -->
-    <header class="bg-primary text-white py-3 px-4 shadow-md z-10 relative">
-        <div class="flex items-center justify-between">
-            <h1 class="text-lg font-semibold">智能聊天助手</h1>
+<body class="bg-white overflow-hidden h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-primary text-white shadow-sm z-10 relative safe-top">
+        <div class="flex items-center justify-between px-4 py-3">
+            <h1 class="text-lg font-medium">智能聊天助手</h1>
             <div class="flex gap-3">
-                <button class="p-2 rounded-full hover:bg-green-700 transition-colors">
-                    <i class="fa fa-info-circle"></i>
+                <button class="p-2 rounded-full hover:bg-secondary transition-colors duration-200">
+                    <i class="fa fa-refresh"></i>
                 </button>
-                <button class="p-2 rounded-full hover:bg-green-700 transition-colors">
-                    <i class="fa fa-cog"></i>
+                <button class="p-2 rounded-full hover:bg-secondary transition-colors duration-200">
+                    <i class="fa fa-ellipsis-v"></i>
                 </button>
             </div>
         </div>
     </header>
     
-    <!-- iframe容器 - 占据剩余空间 -->
-    <div class="iframe-container pt-[56px] pb-0">
-        <iframe src="http://14.116.240.82:30080/chatbot/Kr17mLEiTY6oyCHM2sYHgw" class="w-full h-full border-0" frameborder="0" allow="microphone" allowfullscreen="" title="智能聊天助手"></iframe>
-    </div>
+    <!-- 主内容区 - iframe容器 -->
+    <main class="relative h-[calc(100vh-56px-env(safe-area-inset-top))] overflow-hidden">
+        <iframe 
+            src="http://14.116.240.82:30080/chatbot/Kr17mLEiTY6oyCHM2sYHgw" 
+            class="absolute inset-0 w-full h-full border-0" 
+            frameborder="0" 
+            allow="microphone"
+            title="智能聊天助手"
+        ></iframe>
+        
+        <!-- 加载状态指示器 (初始加载时显示) -->
+        <div id="loader" class="absolute inset-0 bg-white flex flex-col items-center justify-center z-20">
+            <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-gray-600 text-sm">加载中...</p>
+        </div>
+    </main>
     
     <script>
-        // 处理窗口大小变化，确保iframe始终填满可用空间
-        function adjustIframeSize() {
-            const headerHeight = document.querySelector('header').offsetHeight;
-            const statusBarHeight = document.querySelector('.status-bar').offsetHeight;
-            const windowHeight = window.innerHeight;
+        // 处理iframe加载状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.querySelector('iframe');
+            const loader = document.getElementById('loader');
             
-            const iframeContainer = document.querySelector('.iframe-container');
-            iframeContainer.style.height = `${windowHeight - headerHeight - statusBarHeight}px`;
-        }
-        
-        // 初始调整和监听窗口大小变化
-        window.addEventListener('load', adjustIframeSize);
-        window.addEventListener('resize', adjustIframeSize);
-        
-        // 处理iOS设备的安全区域适配
-        if (window.safeAreaInsets) {
-            document.documentElement.style.setProperty('--safe-area-inset-top', `${window.safeAreaInsets.top}px`);
-            document.documentElement.style.setProperty('--safe-area-inset-bottom', `${window.safeAreaInsets.bottom}px`);
-        }
+            // 监听iframe加载完成
+            iframe.onload = function() {
+                // 淡入淡出动画隐藏加载指示器
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+                loader.style.transition = 'opacity 0.3s ease-out';
+            };
+            
+            // 处理窗口大小变化，确保适配各种设备
+            function handleResize() {
+                const headerHeight = document.querySelector('header').offsetHeight;
+                const mainElement = document.querySelector('main');
+                mainElement.style.height = `calc(100vh - ${headerHeight}px - env(safe-area-inset-top))`;
+            }
+            
+            // 初始调整和监听窗口大小变化
+            handleResize();
+            window.addEventListener('resize', handleResize);
+            
+            // 处理iOS设备的安全区域变化
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.documentElement.classList.add('ios-standalone');
+            }
+        });
     </script>
-
-
-</body></html>
-
-
+</body>
+</html>
