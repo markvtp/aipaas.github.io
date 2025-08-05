@@ -17,6 +17,7 @@ CORS(app)  # 解决跨域问题
 
 # --- 配置 ---
 class Config:
+    GEMINI_PRO = 'gemini-2.5-flash'
     # API 配置 - 使用提供的API信息
     API_URL = "http://14.116.240.82:30080/api/v1/conversation"
     API_KEY = "sk-e2706a82412705c0e90a26ba311da546"
