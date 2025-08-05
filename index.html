@@ -3,164 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI智能助手</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>AI问答助手</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
-        
         body {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            color: #fff;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
-        
         .header {
-            padding: 20px 15px;
+            background: linear-gradient(to right, #2962ff, #6200ea);
+            color: white;
+            padding: 14px 20px;
             text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 10;
+            box-shadow: 0 2px 10px rgba(41, 98, 255, 0.3);
         }
-        
-        .header h1 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
         }
-        
-        .header p {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-        
-        .chat-container {
+        .container {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            position: relative;
             padding: 15px;
-            overflow: hidden;
         }
-        
-        .iframe-wrapper {
-            flex: 1;
+        .frame-container {
+            background: white;
             border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
+            height: 100%;
         }
-        
-        .iframe-wrapper iframe {
+        /* 关键修复：强制iframe全尺寸显示 */
+        iframe {
             width: 100%;
             height: 100%;
             border: none;
-            border-radius: 20px;
+            display: block;
         }
-        
-        .nav {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            margin-top: 15px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-        
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .nav-item.active {
-            color: #fff;
-        }
-        
-        .nav-item i {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-        
-        /* 触摸反馈效果 */
-        .nav-item:active {
-            transform: scale(0.95);
-            transition: transform 0.1s;
-        }
-        
-        /* iOS Safari 特定优化 */
-        @supports (-webkit-touch-callout: none) {
-            body {
-                height: -webkit-fill-available;
-            }
-            .header {
-                padding-top: max(20px, env(safe-area-inset-top));
-            }
-        }
-        
-        /* 响应式适配 */
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.2rem;
-            }
-            .header p {
-                font-size: 0.8rem;
-            }
-            .chat-container {
-                padding: 12px;
-            }
+        .tip {
+            text-align: center;
+            color: #757575;
+            font-size: 0.9rem;
+            padding: 15px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>AI智能问答助手</h1>
-        <p>随时解答您的疑问</p>
     </div>
-    
-    <div class="chat-container">
-        <div class="iframe-wrapper">
-            <!-- 嵌入用户提供的iframe -->
+
+    <div class="container">
+        <div class="frame-container">
+            <!-- 直接嵌入目标链接 -->
             <iframe
-                src="http://14.116.240.82:30080/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
+                src="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
+                sandbox="allow-scripts allow-same-origin allow-forms"
                 allow="microphone">
             </iframe>
         </div>
-        
-        <div class="nav">
-            <div class="nav-item active">
-                <i class="fas fa-comments"></i>
-                <span>聊天</span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-history"></i>
-                <span>历史</span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>设置</span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>我的</span>
-            </div>
-        </div>
+    </div>
+
+    <div class="tip">
+        提示：若遇空白页，请尝试<a href="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw" target="_blank">直接访问源地址</a>
     </div>
 </body>
 </html>
-
