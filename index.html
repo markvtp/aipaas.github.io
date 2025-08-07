@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>AI问答助手</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="referrer" content="never">
+    <title>AI智能问答助手</title>
     <style>
         * {
             margin: 0;
@@ -18,6 +20,9 @@
             display: flex;
             flex-direction: column;
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+            /* 企业微信WebView兼容 */
+            -webkit-overflow-scrolling: touch;
+            overflow-scrolling: touch;
         }
         .header {
             background: linear-gradient(to right, #2962ff, #6200ea);
@@ -25,6 +30,8 @@
             padding: 14px 20px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(41, 98, 255, 0.3);
+            /* 适配刘海屏 */
+            padding-top: calc(14px + env(safe-area-inset-top));
         }
         h1 {
             font-size: 1.2rem;
@@ -34,6 +41,8 @@
             flex: 1;
             position: relative;
             padding: 15px;
+            /* 解决企业微信滚动问题 */
+            overflow: hidden;
         }
         .frame-container {
             background: white;
@@ -41,6 +50,9 @@
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             height: 100%;
+            /* 企业微信WebView兼容 */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         /* 关键修复：强制iframe全尺寸显示 */
         iframe {
@@ -48,12 +60,36 @@
             height: 100%;
             border: none;
             display: block;
+            /* 解决企业微信iframe加载问题 */
+            min-height: calc(100vh - 160px);
         }
         .tip {
             text-align: center;
             color: #757575;
             font-size: 0.9rem;
             padding: 15px;
+            /* 适配底部安全区域 */
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #666;
+        }
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #ddd;
+            border-top-color: #2962ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -64,26 +100,54 @@
 
     <div class="container">
         <div class="frame-container">
+            <!-- 加载提示 -->
+            <div class="loading" id="loading-indicator">
+                <div class="loading-spinner"></div>
+                <p>正在加载对话界面...</p>
+            </div>
+            
             <!-- 直接嵌入目标链接 -->
             <iframe
- src="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
- style="width: 100%; height: 100%; min-height: 700px"
- frameborder="0"
- allow="microphone">
-</iframe>
+                src="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
+                frameborder="0"
+                allow="microphone"
+                onload="document.getElementById('loading-indicator').style.display='none'">
+            </iframe>
         </div>
     </div>
 
     <div class="tip">
         提示：若遇空白页，请尝试<a href="http://14.116.240.82:30080/chatbot/Kr17mLEiTY6oyCHM2sYHgw" target="_blank">直接访问源地址</a>
     </div>
+
+    <script>
+        // 企业微信WebView兼容性处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检测是否在企业微信环境
+            function isWeCom() {
+                const ua = navigator.userAgent.toLowerCase();
+                return ua.indexOf('wxwork') > -1;
+            }
+            
+            // 企业微信环境特殊处理
+            if (isWeCom()) {
+                console.log('运行在企业微信环境');
+                
+                // 处理iframe加载失败情况
+                const iframe = document.querySelector('iframe');
+                iframe.onerror = function() {
+                    document.getElementById('loading-indicator').innerHTML = `
+                        <p style="color:#e53e3e;">加载失败</p>
+                        <p style="font-size:0.8rem;">请点击下方提示链接访问</p>
+                    `;
+                };
+                
+                // 监听页面滚动，优化体验
+                document.body.addEventListener('touchmove', function(e) {
+                    e.stopPropagation();
+                }, { passive: false });
+            }
+        });
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
