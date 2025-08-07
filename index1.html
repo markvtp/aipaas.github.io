@@ -2,426 +2,368 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenAI API 测试界面</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        header {
-            background: linear-gradient(to right, #4b6cb7, #182848);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        h1 i {
-            color: #4ade80;
-        }
-
-        .api-info {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            overflow: hidden;
-        }
-
-        .api-info p {
-            margin: 5px 0;
-            word-break: break-all;
-        }
-
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 500px;
-        }
-
-        .chat-history {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: #f9f9ff;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 15px;
-            border-radius: 18px;
-            position: relative;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .user-message {
-            background: #4b6cb7;
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 5px;
-        }
-
-        .ai-message {
-            background: #e9ecef;
-            align-self: flex-start;
-            border-bottom-left-radius: 5px;
-        }
-
-        .message-header {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .user-header {
-            color: #d1e8ff;
-        }
-
-        .ai-header {
-            color: #4b6cb7;
-        }
-
-        .input-area {
-            display: flex;
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #eee;
-            gap: 10px;
-        }
-
-        #user-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-            resize: none;
-            min-height: 60px;
-            max-height: 120px;
-        }
-
-        #user-input:focus {
-            border-color: #4b6cb7;
-            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.2);
-        }
-
-        #send-btn {
-            background: linear-gradient(to right, #4b6cb7, #182848);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 0 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        #send-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(75, 108, 183, 0.4);
-        }
-
-        #send-btn:disabled {
-            background: #a0aec0;
-            transform: none;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .typing-indicator {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 18px;
-            align-self: flex-start;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #4a5568;
-            font-style: italic;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            background: #4b6cb7;
-            border-radius: 50%;
-            animation: bounce 1.5s infinite;
-        }
-
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        footer {
-            text-align: center;
-            padding: 15px;
-            background: #f1f5f9;
-            color: #4a5568;
-            font-size: 0.85rem;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>智能问答助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#eff6ff',
+                        neutral: '#f3f4f6',
+                        'neutral-dark': '#9ca3af'
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
             }
-            
-            .container {
-                border-radius: 12px;
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
             }
-            
-            h1 {
-                font-size: 1.5rem;
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
             }
-            
-            .chat-container {
-                height: 70vh;
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
             }
-            
-            .message {
-                max-width: 90%;
+            .message-appear {
+                animation: fadeIn 0.3s ease-out;
             }
-            
-            .input-area {
-                flex-direction: column;
-            }
-            
-            #send-btn {
-                padding: 15px;
-                width: 100%;
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
             }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-robot"></i> OpenAI 兼容API测试平台</h1>
-            <div class="api-info">
-                <p><strong>API端点：</strong> http://14.116.240.82:30080/api/v1/chat/completions</p>
-                <p><strong>模型ID：</strong> 2abd7b98-b122-4d8e-a8c8-21ccdac60783</p>
+<body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col overflow-hidden">
+    <!-- 顶部导航栏 -->
+    <header class="bg-primary text-white py-4 px-5 shadow-md z-10">
+        <div class="flex items-center justify-between">
+            <h1 class="text-lg font-medium">智能问答助手</h1>
+            <button id="clearBtn" class="text-white/80 hover:text-white transition-colors">
+                <i class="fa fa-trash-o"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- 聊天内容区域 -->
+    <main id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-hide">
+        <!-- 欢迎消息 -->
+        <div class="flex items-start message-appear">
+            <div class="flex-shrink-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                <i class="fa fa-robot"></i>
             </div>
-        </header>
+            <div class="max-w-[80%]">
+                <div class="bg-white rounded-lg rounded-tl-none p-4 shadow-sm">
+                    <p>您好！我是智能问答助手，有什么可以帮助您的吗？</p>
+                </div>
+                <span class="text-xs text-neutral-dark mt-1 block">刚刚</span>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 输入区域 -->
+    <footer class="bg-white border-t border-gray-200 p-3 z-10">
+        <div class="flex items-end gap-2">
+            <textarea 
+                id="messageInput" 
+                class="flex-1 border border-gray-300 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+                placeholder="请输入您的问题..."
+                rows="1"
+            ></textarea>
+            <button 
+                id="sendBtn" 
+                class="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-primary/90 active:bg-primary/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+            >
+                <i class="fa fa-paper-plane-o"></i>
+            </button>
+        </div>
+    </footer>
+    
+    <script>
+        // API配置
+        const API_URL = 'http://14.116.240.82:30080/api/v1/chat/completions';
+        const API_KEY = 'sk-e2706a82412705c0e90a26ba311da546';
+        const MODEL_ID = '2abd7b98-b122-4d8e-a8c8-21ccdac60783';
         
-        <main class="chat-container">
-            <div class="chat-history" id="chat-history">
-                <div class="message ai-message">
-                    <div class="message-header ai-header">
-                        <i class="fas fa-robot"></i> AI助手
+        // DOM元素
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        // 自动调整输入框高度
+        messageInput.addEventListener('input', () => {
+            // 重置高度以获取正确的scrollHeight
+            messageInput.style.height = 'auto';
+            // 设置新高度，最大4行
+            const maxHeight = 4 * 24; // 假设每行高度约24px
+            const newHeight = Math.min(messageInput.scrollHeight, maxHeight);
+            messageInput.style.height = `${newHeight}px`;
+            
+            // 启用/禁用发送按钮
+            sendBtn.disabled = !messageInput.value.trim();
+        });
+        
+        // 发送消息
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // 清空聊天记录
+        clearBtn.addEventListener('click', () => {
+            if (confirm('确定要清空聊天记录吗？')) {
+                chatContainer.innerHTML = '';
+                addMessage('robot', '您好！我是智能问答助手，有什么可以帮助您的吗？');
+            }
+        });
+        
+        // 发送消息函数 - 优化版，解决跨域和错误处理
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // 添加用户消息到界面
+            addMessage('user', message);
+            
+            // 清空输入框并禁用发送按钮
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // 添加加载状态
+            const loadingElement = addLoadingMessage();
+            
+            try {
+                // 创建超时控制器
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+                
+                // 调用API - 优化跨域处理
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Accept': '*/*',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization'
+                    },
+                    body: JSON.stringify({
+                        model: MODEL_ID,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        stream: false
+                    }),
+                    mode: 'cors',
+                    cache: 'no-store',
+                    credentials: 'omit', // 不发送cookie，避免跨域问题
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // 移除加载状态
+                loadingElement.remove();
+                
+                if (!response.ok) {
+                    // 尝试获取详细错误信息
+                    let errorDetails = '';
+                    try {
+                        const errorData = await response.json();
+                        errorDetails = JSON.stringify(errorData, null, 2);
+                    } catch (e) {
+                        errorDetails = await response.text();
+                    }
+                    throw new Error(`API错误 (${response.status}): ${errorDetails}`);
+                }
+                
+                const data = await response.json();
+                const answer = data.choices?.[0]?.message?.content;
+                
+                if (!answer) {
+                    throw new Error('未收到有效的回复内容');
+                }
+                
+                // 添加AI回复到界面
+                addMessage('robot', answer);
+                
+            } catch (error) {
+                console.error('请求出错:', error);
+                // 移除加载状态
+                loadingElement.remove();
+                
+                // 更具体的错误提示
+                let errorMsg = '抱歉，处理您的请求时出错了';
+                
+                if (error.name === 'AbortError') {
+                    errorMsg = '请求超时，请稍后重试';
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+                    errorMsg = '网络连接错误，请检查API跨域配置';
+                } else if (error.message.includes('401') || error.message.includes('403')) {
+                    errorMsg = '权限验证失败，请检查API密钥';
+                } else if (error.message.includes('404')) {
+                    errorMsg = 'API地址不存在，请确认地址是否正确';
+                }
+                
+                // 添加错误消息
+                addMessage('robot', `${errorMsg}\n\n(${error.message.substring(0, 100)})`);
+            }
+        }
+        
+        // 添加消息到聊天界面
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start message-appear';
+            
+            let avatar, messageClass;
+            
+            if (role === 'user') {
+                // 用户消息
+                messageDiv.classList.add('justify-end');
+                avatar = `
+                    <div class="flex-shrink-0 bg-gray-200 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center ml-3">
+                        <i class="fa fa-user"></i>
                     </div>
-                    <div class="message-content">
-                        您好！我是基于OpenAI兼容API的AI助手。您可以向我提问任何问题，我会尽力为您解答。
+                `;
+                messageClass = 'bg-primary text-white rounded-lg rounded-tr-none';
+            } else {
+                // 机器人消息
+                avatar = `
+                    <div class="flex-shrink-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                        <i class="fa fa-robot"></i>
+                    </div>
+                `;
+                messageClass = 'bg-white rounded-lg rounded-tl-none';
+            }
+            
+            // 格式化时间
+            const now = new Date();
+            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            // 处理换行和代码格式
+            content = content
+                .replace(/\n/g, '<br>')
+                .replace(/\s*```([\s\S]*?)```\s*/g, '<div class="bg-gray-100 p-3 rounded-md my-2 text-sm overflow-x-auto">$1</div>');
+            
+            messageDiv.innerHTML = `
+                ${role === 'user' ? '' : avatar}
+                <div class="max-w-[80%]">
+                    <div class="${messageClass} p-4 shadow-sm">
+                        <p>${content}</p>
+                    </div>
+                    <span class="text-xs text-neutral-dark mt-1 block ${role === 'user' ? 'text-right' : ''}">${timeString}</span>
+                </div>
+                ${role === 'user' ? avatar : ''}
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            // 滚动到底部
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+        
+        // 添加加载状态消息
+        function addLoadingMessage() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'flex items-start message-appear';
+            loadingDiv.innerHTML = `
+                <div class="flex-shrink-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                    <i class="fa fa-robot"></i>
+                </div>
+                <div class="max-w-[80%]">
+                    <div class="bg-white rounded-lg rounded-tl-none p-4 shadow-sm">
+                        <div class="flex space-x-2">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            `;
             
-            <div class="input-area">
-                <textarea 
-                    id="user-input" 
-                    placeholder="请输入您的问题..." 
-                    rows="1"
-                ></textarea>
-                <button id="send-btn">
-                    <i class="fas fa-paper-plane"></i> 发送
-                </button>
-            </div>
-        </main>
+            chatContainer.appendChild(loadingDiv);
+            // 滚动到底部
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return loadingDiv;
+        }
         
-        <footer>
-            注意：本测试页面直接与API交互，请勿输入敏感信息
-        </footer>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const chatHistory = document.getElementById('chat-history');
-            const userInput = document.getElementById('user-input');
-            const sendBtn = document.getElementById('send-btn');
-            
-            // 自动调整输入框高度
-            userInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-            
-            // 发送消息函数
-            async function sendMessage() {
-                const message = userInput.value.trim();
-                if (!message) return;
+        // 企业微信环境适配
+        function initWechatWorkEnv() {
+            // 检测是否在企业微信环境
+            const isWechatWork = /wxwork/i.test(navigator.userAgent);
+            if (isWechatWork) {
+                console.log('运行在企业微信环境中');
+                // 企业微信可能需要的特殊处理
+                document.body.classList.add('wechat-work-env');
                 
-                // 禁用输入和按钮
-                userInput.disabled = true;
-                sendBtn.disabled = true;
-                sendBtn.innerHTML = '<span class="loading"></span> 思考中...';
-                
-                // 添加用户消息
-                addMessage(message, 'user');
-                userInput.value = '';
-                userInput.style.height = 'auto';
-                
-                // 显示AI正在输入提示
-                const typingIndicator = document.createElement('div');
-                typingIndicator.className = 'typing-indicator';
-                typingIndicator.innerHTML = `
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <span>AI正在思考...</span>
-                `;
-                chatHistory.appendChild(typingIndicator);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-                
+                // 隐藏导航栏（可选）
                 try {
-                    // 调用API
-                    const response = await fetch('http://14.116.240.82:30080/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer sk-e2706a82412705c0e90a26ba311da546'
-                        },
-                        body: JSON.stringify({
-                            model: "2abd7b98-b122-4d8e-a8c8-21ccdac60783",
-                            messages: [
-                                { role: "user", content: message }
-                            ],
-                            temperature: 0.7,
-                            max_tokens: 1000
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                    if (typeof WeixinJSBridge !== 'undefined') {
+                        WeixinJSBridge.invoke('hideOptionMenu');
+                    } else {
+                        document.addEventListener('WeixinJSBridgeReady', () => {
+                            WeixinJSBridge.invoke('hideOptionMenu');
+                        }, false);
                     }
-                    
-                    const data = await response.json();
-                    
-                    // 移除输入提示
-                    chatHistory.removeChild(typingIndicator);
-                    
-                    // 添加AI回复
-                    const aiResponse = data.choices[0].message.content;
-                    addMessage(aiResponse, 'ai');
-                    
-                } catch (error) {
-                    console.error('API调用错误:', error);
-                    
-                    // 移除输入提示
-                    chatHistory.removeChild(typingIndicator);
-                    
-                    // 显示错误信息
-                    addMessage(`请求失败: ${error.message}。请检查网络连接或API配置。`, 'ai');
-                } finally {
-                    // 重新启用输入和按钮
-                    userInput.disabled = false;
-                    sendBtn.disabled = false;
-                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送';
-                    userInput.focus();
+                } catch (e) {
+                    console.log('企业微信JS桥接器初始化失败:', e);
                 }
             }
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initWechatWorkEnv();
+            // 自动聚焦到输入框
+            messageInput.focus();
             
-            // 添加消息到聊天历史
-            function addMessage(content, sender) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${sender}-message`;
-                
-                messageDiv.innerHTML = `
-                    <div class="message-header ${sender}-header">
-                        <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i>
-                        ${sender === 'user' ? '您' : 'AI助手'}
-                    </div>
-                    <div class="message-content">${content}</div>
-                `;
-                
-                chatHistory.appendChild(messageDiv);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            }
-            
-            // 事件监听
-            sendBtn.addEventListener('click', sendMessage);
-            
-            userInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
+            // 预检测API连通性
+            testApiConnection();
         });
+        
+        // 预检测API连通性
+        async function testApiConnection() {
+            try {
+                const controller = new AbortController();
+                setTimeout(() => controller.abort(), 5000); // 5秒超时
+                
+                await fetch(API_URL, {
+                    method: 'OPTIONS', // 发送预检请求测试连通性
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                
+                console.log('API跨域预检请求成功');
+            } catch (error) {
+                console.warn('API连接预检测失败:', error);
+                // 仅在控制台显示警告，不打扰用户
+            }
+        }
     </script>
 </body>
 </html>
