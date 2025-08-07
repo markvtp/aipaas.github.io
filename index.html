@@ -2,109 +2,79 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM 连通性测试工具 </title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>AI问答助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        }
+        .header {
+            background: linear-gradient(to right, #2962ff, #6200ea);
+            color: white;
+            padding: 14px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(41, 98, 255, 0.3);
+        }
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .container {
+            flex: 1;
+            position: relative;
+            padding: 15px;
+        }
+        .frame-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 100%;
+        }
+        /* 关键修复：强制iframe全尺寸显示 */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        .tip {
+            text-align: center;
+            color: #757575;
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+    </style>
 </head>
 <body>
-<div class="main-wrapper">
-    <div class="container">
-        <h1>LLM 连通性测试工具</h1>
-        <div>
-            <label for="baseUrl">Provider Base URL:</label>
-            <input type="text" id="baseUrl" placeholder="例如: https://api.example.com (不含 /v1)">
-
-            <label for="apiKey">API Key:</label>
-            <input type="password" id="apiKey" placeholder="输入你的 API Key">
-
-            <div class="button-group">
-                <label for="apiKey">Provider Name:</label>
-                <input type="text" id="providerName" class="provider-name-input" placeholder="Provider 名称 (用于保存)">
-                <label for="timeoutInput" style="margin-left:10px;">超时时长(ms):</label>
-                <input type="number" id="timeoutInput" min="1000" max="600000" value="10000" style="width:100px;">
-                <button id="saveProviderBtn" class="btn-success">保存 Provider</button>
-                <button id="saveProviderBtn" class="btn-success">保存 Provider</button>
-                <button id="fetchModelsBtn" class="btn-primary">获取模型列表</button>
-                <div id="loaderModels" class="loader"></div>
-            </div>
-        </div>
-        <hr>
-
-        <div class="streaming-controls">
-            <label>
-                <input type="checkbox" id="enableStreaming" checked>
-                <span>启用流式响应</span>
-            </label>
-        </div>
-
-        <div id="singleModelSection">
-            <label for="modelSelect">选择或输入模型:</label>
-            <div class="model-input-container">
-                <select id="modelSelect">
-                    <option value="">-- 请先获取模型列表 --</option>
-                </select>
-                <input type="text" id="customModel" placeholder="或手动输入模型名称">
-            </div>
-             <div class="button-group">
-                <button id="testModelBtn" class="btn-primary">发送测试消息</button>
-                <button id="toggleModelsBtn" class="btn-secondary">切换到多模型测试</button>
-                <div id="loaderTest" class="loader"></div>
-             </div>
-        </div>
-        <div style="margin-top:10px;">
-            <label for="testPrompt">测试用提示词 (Prompt):</label>
-            <textarea id="testPrompt" rows="3" style="width:100%;" placeholder="请输入你想用来测试模型的提示词，例如：\n你好，请介绍一下你自己。"></textarea>
-        </div>
-
-        <div id="multiModelSection" style="display: none;">
-            <h3>测试多个模型</h3>
-            <div class="select-actions">
-                <button id="selectAllBtn" class="btn-outline-secondary btn-sm">全选</button>
-                <button id="deselectAllBtn" class="btn-outline-secondary btn-sm">全不选</button>
-                <button id="toggleModelsBackBtn" class="btn-secondary toggle-models-btn">返回单模型测试</button>
-            </div>
-            <div id="modelsContainer" class="models-container">
-                <div class="no-models">请先获取模型列表。</div>
-            </div>
-            <div class="button-group">
-                <button id="batchTestBtn" class="btn-primary">测试所选模型</button>
-                <input type="number" id="threadCount" min="1" max="20" value="5" style="width: 60px; margin-left: 10px;">
-                <label for="threadCount" style="margin-left: 5px;">线程数</label>
-                <div id="loaderBatchTest" class="loader"></div>
-            </div>
-
-            <div id="testResultsContainer" style="display: none;">
-                <h4>批量测试结果</h4>
-                <table id="testResultsTable" class="test-results-table">
-                    <thead>
-                        <tr>
-                            <th>模型</th>
-                            <th>状态</th>
-                            <th>响应预览</th>
-                        </tr>
-                    </thead>
-                    <tbody id="testResultsBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <h2>测试结果</h2>
-        <pre id="resultArea">测试结果将显示在此处...</pre>
+    <div class="header">
+        <h1>AI智能问答助手</h1>
     </div>
 
     <div class="container">
-        <h2>已保存的 Providers</h2>
-        <div class="import-export-buttons">
-            <button id="exportProvidersBtn" class="btn-info export-button">导出 Providers</button>
-            <input type="file" id="importProvidersFile" accept=".json" style="display: none;">
-            <button id="importProvidersBtn" class="btn-warning import-button">导入 Providers</button>
-        </div>
-        <div id="savedProviders" class="saved-providers">
-            <div class="no-providers">尚未保存任何 Provider。请使用上方的“保存 Provider”按钮保存当前配置。</div>
+        <div class="frame-container">
+            <!-- 直接嵌入目标链接 -->
+            <iframe
+                src="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                allow="microphone">
+            </iframe>
         </div>
     </div>
-</div>
-<script src="script.js"></script>
+
+    <div class="tip">
+        提示：若遇空白页，请尝试<a href="https://14.116.240.82:1453/chatbot/Kr17mLEiTY6oyCHM2sYHgw" target="_blank">直接访问源地址</a>
+    </div>
 </body>
 </html>
